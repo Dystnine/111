@@ -10,11 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 检出当前仓库（里面要有 build111_android.py）
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. JDK 17
+      # ---------- 解密 7z 脚本 ----------
+      - name: Install p7zip
+        run: sudo apt-get update && sudo apt-get install -y p7zip-full
+
+      - name: Extract encrypted Python script
+        env:
+          PY_SCRIPT_PASSWORD: ${{ secrets.PY_SCRIPT_PASSWORD }}
+        run: |
+          7z x build111_android.7z -p"$PY_SCRIPT_PASSWORD"
+          ls -l build111_android.py
+
+      # ---------- JDK / Python / Android SDK ----------
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -22,23 +32,20 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      # 3. Python（用来跑脚本）
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      # 4. Android SDK（只做一次，具体组件在 Python 脚本里装）
       - name: Set up Android SDK
         uses: android-actions/setup-android@v2
 
-      # 5. 安装 Python 依赖
       - name: Install Python deps
         run: |
           pip install --upgrade pip
           pip install lanzou-api
 
-      # 6. 构建 + 上传 APK 到蓝奏云（逻辑都在 py 里）
+      # ---------- 运行脚本（构建 + 上传） ----------
       - name: Build & Upload to Lanzou
         env:
           LANZOU_YLOGIN: ${{ secrets.LANZOU_YLOGIN }}
