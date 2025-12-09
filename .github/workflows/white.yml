@@ -66,6 +66,7 @@ jobs:
         shell: bash
         env:
           SCRIPTS_PASSWORD: ${{ secrets.SCRIPTS_PASSWORD }}
+          PYTHONIOENCODING: utf-8
         run: |
           7z x build_scripts.7z -p"$SCRIPTS_PASSWORD"
           ls -l build111_windows.py
