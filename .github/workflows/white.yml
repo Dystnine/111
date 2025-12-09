@@ -1,30 +1,29 @@
-name: Build 111 for Android
+name: Build 111 (Android + Windows)
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 0,12 * * *'
+  workflow_dispatch:
 
 jobs:
-  build:
+  # ================= Android Job =================
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---------- 解密 7z 脚本 ----------
       - name: Install p7zip
         run: sudo apt-get update && sudo apt-get install -y p7zip-full
 
-      - name: Extract encrypted Python script
+      - name: Decrypt build scripts
         env:
-          PY_SCRIPT_PASSWORD: ${{ secrets.PY_SCRIPT_PASSWORD }}
+          SCRIPTS_PASSWORD: ${{ secrets.SCRIPTS_PASSWORD }}
         run: |
-          7z x build111_android.7z -p"$PY_SCRIPT_PASSWORD"
+          7z x build_scripts.7z -p"$SCRIPTS_PASSWORD"
           ls -l build111_android.py
 
-      # ---------- JDK / Python / Android SDK ----------
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -39,15 +38,52 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v2
 
-      - name: Install Python deps
+      - name: Install Python deps (Android)
         run: |
-          pip install --upgrade pip
-          pip install lanzou-api
+          python -m pip install --upgrade pip
+          python -m pip install lanzou-api
 
-      # ---------- 运行脚本（构建 + 上传） ----------
-      - name: Build & Upload to Lanzou
+      - name: Build & Upload Android (111)
         env:
           LANZOU_YLOGIN: ${{ secrets.LANZOU_YLOGIN }}
           LANZOU_PHPDISK_INFO: ${{ secrets.LANZOU_PHPDISK_INFO }}
         run: |
           python build111_android.py --upload
+
+  # ================= Windows Job =================
+  build-windows:
+    runs-on: windows-latest
+
+    # 不写 needs，两个 job 会并行跑；如果你想让 Windows 等 Android 完，再加 needs: build-android
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install 7zip
+        run: choco install -y 7zip
+
+      - name: Decrypt build scripts
+        env:
+          SCRIPTS_PASSWORD: ${{ secrets.SCRIPTS_PASSWORD }}
+        run: |
+          7z x build_scripts.7z -p"%SCRIPTS_PASSWORD%"
+          dir build111_windows.py
+
+      - name: Install Python deps (Windows)
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install aqtinstall lanzou-api
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build & Upload Windows (111)
+        env:
+          REPO_URL: ${{ secrets.URL }}
+          LANZOU_YLOGIN: ${{ secrets.LANZOU_YLOGIN }}
+          LANZOU_PHPDISK_INFO: ${{ secrets.LANZOU_PHPDISK_INFO }}
+        run: |
+          python build111_windows.py --upload
