@@ -1,4 +1,4 @@
-name: Build 111 (Android + Windows)
+name: Build 111
 
 on:
   schedule:
