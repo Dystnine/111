@@ -63,11 +63,12 @@ jobs:
         run: choco install -y 7zip
 
       - name: Decrypt build scripts
+        shell: bash
         env:
           SCRIPTS_PASSWORD: ${{ secrets.SCRIPTS_PASSWORD }}
         run: |
-          7z x build_scripts.7z -p"%SCRIPTS_PASSWORD%"
-          dir build111_windows.py
+          7z x build_scripts.7z -p"$SCRIPTS_PASSWORD"
+          ls -l build111_windows.py
 
       - name: Install Python deps (Windows)
         shell: bash
