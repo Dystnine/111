@@ -97,7 +97,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-zip
-          path: 111/artifacts/
+          path: eden/artifacts/*.zip
+          if-no-files-found: warn
           retention-days: 1
 
 
