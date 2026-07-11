@@ -90,6 +90,7 @@ jobs:
       - name: Build Windows (no upload)
         env:
           REPO_URL: ${{ secrets.URL }}
+          _CL_: /wd4800
         run: |
           python build111_windows.py --no-upload
 
@@ -147,4 +148,10 @@ jobs:
           LANZOU_YLOGIN: ${{ secrets.LANZOU_YLOGIN }}
           LANZOU_PHPDISK_INFO: ${{ secrets.LANZOU_PHPDISK_INFO }}
         run: |
-          python3 upload_all.py
+          for i in 1 2 3; do
+            python3 upload_all.py && break
+            if [ "$i" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((i * 30))
+          done
