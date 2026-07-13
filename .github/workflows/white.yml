@@ -87,25 +87,6 @@ jobs:
         with:
           arch: x64
 
-      - name: Patch build script to suppress C4800
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('build111_windows.py')
-          text = p.read_text(encoding='utf-8')
-          needle = 'cmake -S '
-          if needle not in text:
-              raise SystemExit('could not find cmake -S invocation in build111_windows.py')
-          text = text.replace(
-              needle,
-              'cmake -DCMAKE_CXX_FLAGS="/wd4800" -S ',
-              1,
-          )
-          p.write_text(text, encoding='utf-8')
-          print('patched build111_windows.py with /wd4800')
-          PY
-
       - name: Build Windows (no upload)
         env:
           REPO_URL: ${{ secrets.URL }}
