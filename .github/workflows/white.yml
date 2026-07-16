@@ -101,66 +101,65 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
-
-  final-upload:
-    needs:
-      - build-android
-      - build-windows
-    if: ${{ !cancelled() && (needs.build-android.result == 'success' || needs.build-windows.result == 'success') }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Download Android APK artifacts
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: android-apks
-          path: artifacts/android
-
-      - name: Download Windows ZIP artifacts
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-zip
-          path: artifacts/windows
-
-      - name: List downloaded files
-        run: |
-          echo "=== ANDROID APKs ==="
-          ls -l artifacts/android 2>/dev/null || echo "(none)"
-          echo "=== WINDOWS ZIPs ==="
-          ls -l artifacts/windows 2>/dev/null || echo "(none)"
-          echo "=== TOTAL FILES ==="
-          find artifacts -type f 2>/dev/null | wc -l
-
-      - name: Install Python deps
-        run: |
-          pip install lanzou-api
-
-      - name: Decrypt scripts for upload_all
-        env:
-          SCRIPTS_PASSWORD: ${{ secrets.SCRIPTS_PASSWORD }}
-        run: |
-          7z x build_scripts.7z -p"$SCRIPTS_PASSWORD"
-          ls -l upload_all.py
-
-      - name: Upload available files to LanzouCloud
-        env:
-          LANZOU_YLOGIN: ${{ secrets.LANZOU_YLOGIN }}
-          LANZOU_PHPDISK_INFO: ${{ secrets.LANZOU_PHPDISK_INFO }}
-        run: |
-          FILE_COUNT=$(find artifacts -type f 2>/dev/null | wc -l)
-          if [ "$FILE_COUNT" -eq 0 ]; then
-            echo "No files to upload."
-            exit 1
-          fi
-          for i in 1 2 3; do
-            python3 upload_all.py && break
-            if [ "$i" -eq 3 ]; then
-              exit 1
-            fi
-            sleep $((i * 30))
-          done
+##  final-upload:
+##    needs:
+##      - build-android
+##      - build-windows
+##    if: ${{ !cancelled() && (needs.build-android.result == 'success' || needs.build-windows.result == 'success') }}
+##    runs-on: ubuntu-latest
+##
+##    steps:
+##      - name: Checkout repo
+##        uses: actions/checkout@v4
+##
+##      - name: Download Android APK artifacts
+##        continue-on-error: true
+##        uses: actions/download-artifact@v4
+##        with:
+##          name: android-apks
+##          path: artifacts/android
+##
+##      - name: Download Windows ZIP artifacts
+##        continue-on-error: true
+##        uses: actions/download-artifact@v4
+##        with:
+##          name: windows-zip
+##          path: artifacts/windows
+##
+##      - name: List downloaded files
+##        run: |
+##          echo "=== ANDROID APKs ==="
+##          ls -l artifacts/android 2>/dev/null || echo "(none)"
+##          echo "=== WINDOWS ZIPs ==="
+##          ls -l artifacts/windows 2>/dev/null || echo "(none)"
+##          echo "=== TOTAL FILES ==="
+##          find artifacts -type f 2>/dev/null | wc -l
+##
+##      - name: Install Python deps
+##        run: |
+##          pip install lanzou-api
+##
+##      - name: Decrypt scripts for upload_all
+##        env:
+##          SCRIPTS_PASSWORD: ${{ secrets.SCRIPTS_PASSWORD }}
+##        run: |
+##          7z x build_scripts.7z -p"$SCRIPTS_PASSWORD"
+##          ls -l upload_all.py
+##
+##      - name: Upload available files to LanzouCloud
+##        env:
+##          LANZOU_YLOGIN: ${{ secrets.LANZOU_YLOGIN }}
+##          LANZOU_PHPDISK_INFO: ${{ secrets.LANZOU_PHPDISK_INFO }}
+##        run: |
+##          FILE_COUNT=$(find artifacts -type f 2>/dev/null | wc -l)
+##          if [ "$FILE_COUNT" -eq 0 ]; then
+##            echo "No files to upload."
+##            exit 1
+##          fi
+##          for i in 1 2 3; do
+##            python3 upload_all.py && break
+##            if [ "$i" -eq 3 ]; then
+##              exit 1
+##            fi
+##            sleep $((i * 30))
+##          done
